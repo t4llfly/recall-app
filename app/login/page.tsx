@@ -38,8 +38,8 @@ export default function LoginPage() {
       });
       error = signUpError;
       if (!error) {
-        toast.success("Регистрация завершена! Подтвердите почту, чтобы войти.");
         toast.warning("Если письмо не пришло, проверьте папку Спам.");
+        toast.success("Регистрация завершена! Подтвердите почту, чтобы войти.");
       }
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({
