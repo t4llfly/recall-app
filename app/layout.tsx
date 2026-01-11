@@ -16,8 +16,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recall",
-  description: "Quizlet alternative for AITU students",
+  title: {
+    template: "%s | Recall",
+    default: "Recall"
+  },
+  description: "Альтернатива Quizlet для студентов AITU.",
+  openGraph: {
+    title: "Recall",
+    description: "Альтернатива Quizlet для студентов AITU.",
+    url: "https://recall.tallfly.me",
+    siteName: "Recall",
+    images: [
+      {
+        url: "https://recall.tallfly.me/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Recall",
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  }
 };
 
 export default function RootLayout({
