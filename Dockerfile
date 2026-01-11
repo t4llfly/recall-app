@@ -1,5 +1,5 @@
 # 1. Base image
-FROM node:25-alpine AS base
+FROM node:24-alpine AS base
 
 # 2. Dependencies
 FROM base AS deps
