@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { BookOpen, Heart } from "lucide-react";
+import {BookOpen, Heart, Lock, User} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { DeckInterface } from "@/lib/interface";
 
@@ -20,17 +20,29 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchDecks() {
-      const { data } = await supabase
-        .from("decks")
-        .select("*, cards(count), deck_likes(count)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+          .from('decks')
+          .select(`
+            *, 
+            cards(count), 
+            deck_likes(count),
+            profiles(email) 
+        `) // <--- Магия: запрашиваем email из связанной таблицы profiles
+          .order('created_at', { ascending: false })
 
-      setDecks(data || []);
-      setLoading(false);
+      if (error) console.error(error)
+      else setDecks(data || [])
+
+      setLoading(false)
     }
 
-    fetchDecks();
-  }, []);
+    fetchDecks()
+  }, [])
+
+  const formatAuthor = (email: string) => {
+    if (!email) return 'Неизвестный'
+    return email.split('@')[0]
+  }
 
   return (
     <main className="p-4 md:p-8 bg-background">
@@ -48,10 +60,17 @@ export default function Home() {
             {decks.map((deck) => (
               <Link href={`/deck/${deck.id}`} key={deck.id}>
                 <Card className="h-full hover:shadow-md transition-shadow cursor-pointer border-border">
+
                   <CardHeader>
-                    <CardTitle className="text-2xl font-bold truncate">
+                    <CardTitle className="flex items-center gap-3 text-2xl font-bold truncate">
                       {deck.title}
                     </CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <User className="h-3 w-3" />
+                      <span className="font-medium text-slate-700">
+                            {formatAuthor(deck.profiles?.email)}
+                        </span>
+                    </div>
                     <CardDescription className="flex items-center mt-2">
                       <BookOpen className="mr-2 h-4 w-4" />
                       {deck.cards?.[0]?.count || 0} терминов
@@ -63,6 +82,9 @@ export default function Home() {
                     </span>
 
                     <div className="flex items-center gap-1">
+                      {!deck.is_public && (
+                          <Lock className="h-4 w-4 text-orange-500 mr-1" />
+                      )}
                       <Heart className="h-4 w-4" />
                       <span>{deck.deck_likes?.[0]?.count || 0}</span>
                     </div>

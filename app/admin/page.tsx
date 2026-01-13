@@ -10,20 +10,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Save, ShieldAlert } from "lucide-react"
 import {Spinner} from "@/components/ui/spinner";
+import {toast} from "sonner";
 
 export default function AdminPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
 
-    // Состояние настроек
     const [enabled, setEnabled] = useState(false)
     const [message, setMessage] = useState('')
 
-    // 1. Проверяем права и грузим данные
     useEffect(() => {
         async function init() {
-            // Проверка админа
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) {
                 router.push('/')
@@ -37,12 +35,11 @@ export default function AdminPage() {
                 .single()
 
             if (profile?.role !== 'admin') {
-                alert('Доступ запрещен')
+                toast.error('Доступ запрещен')
                 router.push('/')
                 return
             }
 
-            // Загрузка текущих настроек
             const { data: settings } = await supabase
                 .from('app_settings')
                 .select('value')
@@ -59,7 +56,6 @@ export default function AdminPage() {
         init()
     }, [router])
 
-    // 2. Сохранение
     const handleSave = async () => {
         setSaving(true)
         const { error } = await supabase
@@ -73,8 +69,8 @@ export default function AdminPage() {
             .eq('key', 'maintenance')
 
         setSaving(false)
-        if (error) alert('Ошибка!')
-        else alert('Настройки обновлены!')
+        if (error) toast.error('Ошибка!')
+        else toast.success('Настройки обновлены!')
     }
 
     if (loading) return <Spinner className="mx-auto size-8 items-center justify-center h-screen" />
@@ -83,13 +79,13 @@ export default function AdminPage() {
         <main className="min-h-screen p-4 md:p-8 bg-background">
             <div className="max-w-6xl mx-auto mt-15 space-y-6">
                 <h1 className="text-3xl font-bold flex items-center gap-2">
-                    <ShieldAlert className="h-8 w-8 text-red-600" />
-                    Панель Администратора
+                    <ShieldAlert className="hidden sm:inline h-8 w-8 text-red-600" />
+                    Панель админа
                 </h1>
 
-                <Card className="w-3xl mx-auto">
+                <Card className="w-full md:w-2xl mx-auto">
                     <CardHeader>
-                        <CardTitle>Режим технического обслуживания</CardTitle>
+                        <CardTitle>Режим обновления</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-accent">
@@ -119,7 +115,6 @@ export default function AdminPage() {
                             {saving ? 'Сохранение...' : 'Сохранить настройки'}
                             <Save className="ml-2 h-4 w-4" />
                         </Button>
-
                     </CardContent>
                 </Card>
             </div>

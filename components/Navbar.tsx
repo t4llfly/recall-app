@@ -2,27 +2,25 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Plus } from "lucide-react";
+import {LogOut, User, Plus, ShieldAlert} from "lucide-react";
 
 export function Navbar() {
-  const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string>('student')
 
-  const checkAdmin = async (userId: string) => {
+  const fetchRole = async (userId: string) => {
     const { data } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
 
-    if (data?.role === "admin") {
-      setIsAdmin(true);
+    if (data?.role) {
+      setRole(data.role)
     }
-  };
+  }
 
   useEffect(() => {
     // 1. Проверяем текущую сессию при загрузке
@@ -32,30 +30,31 @@ export function Navbar() {
       } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        checkAdmin(session.user.id);
+        fetchRole(session.user.id);
       }
     };
 
     getUser();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
       if (session?.user) {
-        checkAdmin(session.user.id);
+        fetchRole(session.user.id)
       } else {
-        setIsAdmin(false);
+        setRole('student')
       }
-    });
+    })
 
     return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.refresh();
+    window.location.href = '/'
   };
+
+  const canCreate = role === 'admin' || role === 'writer'
+  const canAccessAdminPanel = role === 'admin'
 
   return (
     <nav className="fixed pointer-events-none z-10 w-screen">
@@ -70,16 +69,20 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {user && isAdmin && (
-            <Link href="/create">
-              <Button
-                className="pointer-events-auto cursor-pointer rounded-full"
-                variant="default"
-              >
-                <Plus className="h-4 w-4" />{" "}
-                <span className="hidden sm:inline">Создать</span>
-              </Button>
-            </Link>
+          {user && canAccessAdminPanel && (
+              <Link className="pointer-events-auto" href="/admin">
+                <Button variant="ghost" className="cursor-pointer rounded-full px-2 sm:px-4 text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <ShieldAlert className="h-4 w-4" />
+                </Button>
+              </Link>
+          )}
+          {user && canCreate && (
+              <Link className="pointer-events-auto" href="/create">
+                <Button variant="default" className="cursor-pointer rounded-full px-2 sm:px-4">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Создать</span>
+                </Button>
+              </Link>
           )}
 
           {user ? (

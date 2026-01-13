@@ -7,17 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Save } from "lucide-react";
+import {Trash2, Plus, Save, Globe, Lock} from "lucide-react";
 import {toast} from "sonner";
+import {Switch} from "@/components/ui/switch";
 
 export default function CreatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  // Состояние для названия колоды
   const [title, setTitle] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
 
-  // Состояние для списка карточек (сразу даем одну пустую)
   const [cards, setCards] = useState([{ front: "", back: "" }]);
 
   // Добавить пустую строку
@@ -45,51 +44,51 @@ export default function CreatePage() {
 
   // Сохранение в базу
   const handleSave = async () => {
-    if (!title) return alert("Введите название модуля!");
+    if (!title) return toast.error("Введите название модуля!");
     setLoading(true);
 
     try {
-      // 1. Создаем колоду (Deck)
-      const { data: deckData, error: deckError } = await supabase
-        .from("decks")
-        .insert({ title })
-        .select() // Важно: возвращаем созданный объект, чтобы взять ID
-        .single();
-
-      if (deckError) throw deckError;
-
-      // 2. Подготавливаем карточки (добавляем deck_id)
-      const cardsToInsert = cards
-        .filter((c) => c.front && c.back) // Игнорируем пустые
-        .map((c) => ({
-          deck_id: deckData.id,
-          front: c.front,
-          back: c.back,
-        }));
-
-      if (cardsToInsert.length === 0) {
-        alert("Заполните хотя бы одну карточку");
-        setLoading(false);
-        return;
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error('Нужно войти в систему!')
+        setLoading(false)
+        return
       }
 
-      // 3. Заливаем карточки пачкой
-      const { error: cardsError } = await supabase
-        .from("cards")
-        .insert(cardsToInsert);
+      const { data: deckData, error: deckError } = await supabase
+          .from('decks')
+          .insert({
+            title,
+            is_public: isPublic,
+            user_id: session.user.id
+          })
+          .select()
+          .single()
 
-      if (cardsError) throw cardsError;
+      if (deckError) throw deckError
 
-      // Успех! Переходим на главную
-      toast.success("Модуль создан!");
-      router.push("/");
-    } catch (error) {
-      console.error(error);
-      alert("Ошибка при сохранении :(");
+      const cardsToInsert = cards
+          .filter(c => c.front && c.back)
+          .map(c => ({
+            deck_id: deckData.id,
+            front: c.front,
+            back: c.back
+          }))
+
+      if (cardsToInsert.length > 0) {
+        const { error: cardsError } = await supabase.from('cards').insert(cardsToInsert)
+        if (cardsError) throw cardsError
+      }
+
+      router.push('/')
+
+    } catch (error: any) {
+      console.error(error)
+      toast.error('Ошибка: ' + error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <main className="min-h-screen p-4 md:p-8 bg-background">
@@ -122,6 +121,26 @@ export default function CreatePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
+
+            <div className="flex items-center space-x-4 border p-4 rounded-lg bg-slate-50/50">
+              {isPublic ? <Globe className="h-6 w-6 text-blue-500" /> : <Lock className="h-6 w-6 text-orange-500" />}
+              <div className="flex-1">
+                <Label htmlFor="public-mode" className="text-base font-medium cursor-pointer">
+                  {isPublic ? "Публичный доступ" : "Приватный доступ"}
+                </Label>
+                <p className="text-sm text-slate-500">
+                  {isPublic
+                      ? "Колоду видят все студенты."
+                      : "Колоду видишь только ты (и админы)."
+                  }
+                </p>
+              </div>
+              <Switch
+                  id="public-mode"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
+              />
+            </div>
           </CardContent>
         </Card>
 
