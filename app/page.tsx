@@ -7,10 +7,9 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import {BookOpen, Heart, Lock, User} from "lucide-react";
+import {BookOpen, Calendar, Heart, Lock, User} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { DeckInterface } from "@/lib/interface";
 
@@ -71,13 +70,12 @@ export default function Home() {
                             {formatAuthor(deck.profiles?.email)}
                         </span>
                     </div>
-                    <CardDescription className="flex items-center mt-2">
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      {deck.cards?.[0]?.count || 0} терминов
-                    </CardDescription>
                   </CardHeader>
                   <CardFooter className="pt-0 flex justify-between items-center text-slate-400 text-xs">
-                    <span>
+                    <span className="flex items-center">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      {deck.cards?.[0]?.count || 0} шт.
+                      <Calendar className="mx-2 h-4 w-4" />
                       {new Date(deck.created_at).toLocaleDateString()}
                     </span>
 

@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Check } from "lucide-react";
+import {toast} from "sonner";
 
 export function ShareButton() {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
-    // Копируем текущий URL страницы
     navigator.clipboard.writeText(window.location.href);
-
-    // Включаем состояние "Скопировано"
     setIsCopied(true);
+    toast.success("Ссылка скопирована!");
 
-    // Через 2 секунды возвращаем иконку обратно
     setTimeout(() => {
       setIsCopied(false);
     }, 2000);
@@ -23,7 +21,7 @@ export function ShareButton() {
   return (
     <Button
       variant="outline"
-      size="icon" // Круглая/квадратная кнопка под иконку
+      size="icon"
       className={`rounded-full text-slate-500 hover:text-slate-700 transition-all ease-in-out duration-300 ${isCopied ? "bg-green-50 text-green-600 border-green-200" : ""}`}
       onClick={handleCopy}
       title="Скопировать ссылку"

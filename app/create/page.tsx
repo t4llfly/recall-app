@@ -51,9 +51,8 @@ export default function CreatePage() {
     setCards([...cards, { front: "", back: "" }]);
   };
 
-  // Удалить строку по индексу
   const removeCard = (index: number) => {
-    if (cards.length === 1) return; // Не даем удалить последнюю
+    if (cards.length === 1) return;
     const newCards = cards.filter((_, i) => i !== index);
     setCards(newCards);
   };
@@ -71,7 +70,19 @@ export default function CreatePage() {
 
   // Сохранение в базу
   const handleSave = async () => {
-    if (!title) return toast.error("Введите название модуля!");
+    const cleanTitle = title.trim()
+
+    if (!cleanTitle) return toast.error('Введите название модуля!');
+
+    const validCards = cards
+        .filter(c => c.front.trim().length > 0 && c.back.trim().length > 0)
+        .map(c => ({
+          front: c.front.trim(),
+          back: c.back.trim()
+        }))
+
+    if (validCards.length === 0) return toast.error('Заполните хотя бы одну карточку!');
+
     setLoading(true);
 
     try {
@@ -82,14 +93,14 @@ export default function CreatePage() {
         return
       }
 
-      // const canMakePublic = role === 'admin' || role === 'writer'
-      // const finalIsPublic = canMakePublic ? isPublic : false
+      const canMakePublic = role === 'admin' || role === 'writer'
+      const finalIsPublic = canMakePublic ? isPublic : false
 
       const { data: deckData, error: deckError } = await supabase
           .from('decks')
           .insert({
-            title,
-            is_public: isPublic,
+            title: cleanTitle,
+            is_public: finalIsPublic,
             user_id: session.user.id
           })
           .select()
@@ -97,13 +108,11 @@ export default function CreatePage() {
 
       if (deckError) throw deckError
 
-      const cardsToInsert = cards
-          .filter(c => c.front && c.back)
-          .map(c => ({
-            deck_id: deckData.id,
-            front: c.front,
-            back: c.back
-          }))
+      const cardsToInsert = validCards.map(c => ({
+        deck_id: deckData.id,
+        front: c.front,
+        back: c.back
+      }))
 
       if (cardsToInsert.length > 0) {
         const { error: cardsError } = await supabase.from('cards').insert(cardsToInsert)

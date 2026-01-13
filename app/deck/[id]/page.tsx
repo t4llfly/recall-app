@@ -92,7 +92,7 @@ export default function DeckPage() {
   if (cards.length === 0)
     return (
       <div className="flex flex-col h-screen items-center justify-center gap-4">
-        <p>В этой колоде нет карточек :(</p>
+        <p>В этой колоде нет карточек или у вас к ней нет доступа :(</p>
         <Link href="/">
           <Button className="rounded-full">Вернуться назад</Button>
         </Link>
