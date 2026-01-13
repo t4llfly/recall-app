@@ -38,7 +38,6 @@ export function Navbar() {
 
     getUser();
 
-    // 2. Подписываемся на изменения (вход/выход), чтобы шапка обновлялась сама
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import {MaintenanceBanner} from "@/components/MaintenanceBanner";
 
 const MontserratFont = Montserrat({
   variable: "--font-montserrat",
@@ -55,6 +56,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <MaintenanceBanner/>
           <Navbar />
           {children}
           <Toaster />
