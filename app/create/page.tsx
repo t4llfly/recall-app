@@ -1,25 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {Trash2, Plus, Save, Globe, Lock} from "lucide-react";
+import {Trash2, Plus, Save, Globe, Lock, AlertCircle} from "lucide-react";
 import {toast} from "sonner";
 import {Switch} from "@/components/ui/switch";
+import {Spinner} from "@/components/ui/spinner";
 
 export default function CreatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
+  const [role, setRole] = useState<string>('student');
+  const [checkingRole, setCheckingRole] = useState(true);
 
   const [cards, setCards] = useState([{ front: "", back: "" }]);
 
-  // Добавить пустую строку
+  useEffect(() => {
+    async function getUserRole() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+
+      if (profile) {
+        setRole(profile.role)
+        if (profile.role === 'admin' || profile.role === 'writer') {
+          setIsPublic(true)
+        }
+      }
+      setCheckingRole(false)
+    }
+    getUserRole()
+  }, [router])
+
   const addCard = () => {
     setCards([...cards, { front: "", back: "" }]);
   };
@@ -54,6 +81,9 @@ export default function CreatePage() {
         setLoading(false)
         return
       }
+
+      // const canMakePublic = role === 'admin' || role === 'writer'
+      // const finalIsPublic = canMakePublic ? isPublic : false
 
       const { data: deckData, error: deckError } = await supabase
           .from('decks')
@@ -90,6 +120,10 @@ export default function CreatePage() {
     }
   }
 
+  if (checkingRole) return <Spinner className="mx-auto size-8 items-center justify-center h-screen" />
+
+  const canMakePublic = role === 'admin' || role === 'writer'
+
   return (
     <main className="min-h-screen p-4 md:p-8 bg-background">
       <div className="max-w-6xl mt-15 mx-auto space-y-8">
@@ -122,23 +156,33 @@ export default function CreatePage() {
               onChange={(e) => setTitle(e.target.value)}
             />
 
-            <div className="flex items-center space-x-4 border p-4 rounded-lg bg-slate-50/50">
+            <div className={`flex items-center space-x-4 border p-4 rounded-lg transition-colors ${!canMakePublic ? 'bg-slate-100 opacity-80' : 'bg-slate-50'}`}>
               {isPublic ? <Globe className="h-6 w-6 text-blue-500" /> : <Lock className="h-6 w-6 text-orange-500" />}
+
               <div className="flex-1">
                 <Label htmlFor="public-mode" className="text-base font-medium cursor-pointer">
                   {isPublic ? "Публичный доступ" : "Приватный доступ"}
                 </Label>
-                <p className="text-sm text-slate-500">
-                  {isPublic
-                      ? "Колоду видят все студенты."
-                      : "Колоду видишь только ты (и админы)."
-                  }
-                </p>
+
+                <div className="text-sm text-slate-500 mt-1">
+                  {!canMakePublic ? (
+                      <span className="text-orange-600 flex items-center gap-1 font-medium">
+                                <AlertCircle className="h-3 w-3" />
+                                Только авторы и админы могут делать публичные колоды.
+                            </span>
+                  ) : (
+                      isPublic
+                          ? "Колоду увидят все студенты."
+                          : "Колоду увидишь только ты."
+                  )}
+                </div>
               </div>
+
               <Switch
                   id="public-mode"
                   checked={isPublic}
                   onCheckedChange={setIsPublic}
+                  disabled={!canMakePublic}
               />
             </div>
           </CardContent>

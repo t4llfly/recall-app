@@ -23,7 +23,6 @@ export function Navbar() {
   }
 
   useEffect(() => {
-    // 1. Проверяем текущую сессию при загрузке
     const getUser = async () => {
       const {
         data: { session },
@@ -53,7 +52,7 @@ export function Navbar() {
     window.location.href = '/'
   };
 
-  const canCreate = role === 'admin' || role === 'writer'
+  const canCreate = !!user
   const canAccessAdminPanel = role === 'admin'
 
   return (
