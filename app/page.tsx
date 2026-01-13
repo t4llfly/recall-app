@@ -46,7 +46,7 @@ export default function Home() {
 
   return (
     <main className="p-4 md:p-8 bg-background">
-      <div className="max-w-6xl mx-auto h-screen space-y-8">
+      <div className="max-w-6xl mx-auto h-max space-y-8">
         {loading ? (
           <Spinner className="mt-15 mx-auto size-8" />
         ) : (
@@ -95,7 +95,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      <p className="select-none text-center">
+      <p className="mt-5 select-none text-center">
         made by{" "}
         <a
           suppressHydrationWarning

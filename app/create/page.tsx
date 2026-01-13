@@ -156,7 +156,7 @@ export default function CreatePage() {
               onChange={(e) => setTitle(e.target.value)}
             />
 
-            <div className={`flex items-center space-x-4 border p-4 rounded-lg transition-colors ${!canMakePublic ? 'bg-slate-100 opacity-80' : 'bg-slate-50'}`}>
+            <div className={`flex items-center space-x-4 border p-4 rounded-lg transition-colors ${!canMakePublic ? 'bg-background opacity-80' : 'bg-background'}`}>
               {isPublic ? <Globe className="h-6 w-6 text-blue-500" /> : <Lock className="h-6 w-6 text-orange-500" />}
 
               <div className="flex-1">
