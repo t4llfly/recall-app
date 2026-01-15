@@ -1,51 +1,53 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {Trash2, Plus, Save, Globe, Lock, AlertCircle} from "lucide-react";
-import {toast} from "sonner";
-import {Switch} from "@/components/ui/switch";
-import {Spinner} from "@/components/ui/spinner";
+import { Trash2, Plus, Save, Globe, Lock, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function CreatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [role, setRole] = useState<string>('student');
+  const [role, setRole] = useState<string>("student");
   const [checkingRole, setCheckingRole] = useState(true);
 
   const [cards, setCards] = useState([{ front: "", back: "" }]);
 
   useEffect(() => {
     async function getUserRole() {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/login')
-        return
+        router.push("/login");
+        return;
       }
 
       const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
 
       if (profile) {
-        setRole(profile.role)
-        if (profile.role === 'admin' || profile.role === 'writer') {
-          setIsPublic(true)
+        setRole(profile.role);
+        if (profile.role === "admin" || profile.role === "writer") {
+          setIsPublic(true);
         }
       }
-      setCheckingRole(false)
+      setCheckingRole(false);
     }
-    getUserRole()
-  }, [router])
+    getUserRole();
+  }, [router]);
 
   const addCard = () => {
     setCards([...cards, { front: "", back: "" }]);
@@ -70,68 +72,81 @@ export default function CreatePage() {
 
   // Сохранение в базу
   const handleSave = async () => {
-    const cleanTitle = title.trim()
+    const cleanTitle = title.trim();
 
-    if (!cleanTitle) return toast.error('Введите название модуля!');
+    if (!cleanTitle) return toast.error("Введите название модуля!");
 
     const validCards = cards
-        .filter(c => c.front.trim().length > 0 && c.back.trim().length > 0)
-        .map(c => ({
-          front: c.front.trim(),
-          back: c.back.trim()
-        }))
+      .filter((c) => c.front.trim().length > 0 && c.back.trim().length > 0)
+      .map((c) => ({
+        front: c.front.trim(),
+        back: c.back.trim(),
+      }));
 
-    if (validCards.length === 0) return toast.error('Заполните хотя бы одну карточку!');
+    if (validCards.length === 0)
+      return toast.error("Заполните хотя бы одну карточку!");
 
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Нужно войти в систему!')
-        setLoading(false)
-        return
+        toast.error("Нужно войти в систему!");
+        setLoading(false);
+        return;
       }
 
-      const canMakePublic = role === 'admin' || role === 'writer'
-      const finalIsPublic = canMakePublic ? isPublic : false
+      const canMakePublic = role === "admin" || role === "writer";
+      const finalIsPublic = canMakePublic ? isPublic : false;
 
       const { data: deckData, error: deckError } = await supabase
-          .from('decks')
-          .insert({
-            title: cleanTitle,
-            is_public: finalIsPublic,
-            user_id: session.user.id
-          })
-          .select()
-          .single()
+        .from("decks")
+        .insert({
+          title: cleanTitle,
+          is_public: finalIsPublic,
+          user_id: session.user.id,
+        })
+        .select()
+        .single();
 
-      if (deckError) throw deckError
-
-      const cardsToInsert = validCards.map(c => ({
-        deck_id: deckData.id,
-        front: c.front,
-        back: c.back
-      }))
-
-      if (cardsToInsert.length > 0) {
-        const { error: cardsError } = await supabase.from('cards').insert(cardsToInsert)
-        if (cardsError) throw cardsError
+      if (deckError) {
+        console.error(deckError);
       }
 
-      router.push('/')
+      const cardsToInsert = validCards.map((c) => ({
+        deck_id: deckData.id,
+        front: c.front,
+        back: c.back,
+      }));
 
-    } catch (error: any) {
-      console.error(error)
-      toast.error('Ошибка: ' + error.message)
+      if (cardsToInsert.length > 0) {
+        const { error: cardsError } = await supabase
+          .from("cards")
+          .insert(cardsToInsert);
+        if (cardsError) {
+          console.error(cardsError);
+        }
+      }
+
+      router.push("/");
+    } catch (error: unknown) {
+      console.error(error);
+      const message =
+        error instanceof Error ? error.message : "Неизвестная ошибка";
+      toast.error("Ошибка: " + message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (checkingRole) return <Spinner className="mx-auto size-8 items-center justify-center h-screen" />
+  if (checkingRole)
+    return (
+      <Spinner className="mx-auto size-8 items-center justify-center h-screen" />
+    );
 
-  const canMakePublic = role === 'admin' || role === 'writer'
+  const canMakePublic = role === "admin" || role === "writer";
 
   return (
     <main className="min-h-screen p-4 md:p-8 bg-background">
@@ -153,7 +168,7 @@ export default function CreatePage() {
         </div>
 
         <Card>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-4">
             <Label htmlFor="title" className="sm:text-lg">
               Название
             </Label>
@@ -165,33 +180,42 @@ export default function CreatePage() {
               onChange={(e) => setTitle(e.target.value)}
             />
 
-            <div className={`flex items-center space-x-4 border p-4 rounded-lg transition-colors ${!canMakePublic ? 'bg-background opacity-80' : 'bg-background'}`}>
-              {isPublic ? <Globe className="h-6 w-6 text-blue-500" /> : <Lock className="h-6 w-6 text-orange-500" />}
+            <div
+              className={`flex items-center space-x-4 border p-4 rounded-lg transition-colors ${!canMakePublic ? "bg-accent opacity-80" : "bg-accent"}`}
+            >
+              {isPublic ? (
+                <Globe className="h-6 w-6 text-blue-500" />
+              ) : (
+                <Lock className="h-6 w-6 text-orange-500" />
+              )}
 
               <div className="flex-1">
-                <Label htmlFor="public-mode" className="text-base font-medium cursor-pointer">
+                <Label
+                  htmlFor="public-mode"
+                  className="text-base font-medium cursor-pointer"
+                >
                   {isPublic ? "Публичный доступ" : "Приватный доступ"}
                 </Label>
 
                 <div className="text-sm text-slate-500 mt-1">
                   {!canMakePublic ? (
-                      <span className="text-orange-600 flex items-center gap-1 font-medium">
-                                <AlertCircle className="h-3 w-3" />
-                                Только авторы и админы могут делать публичные колоды.
-                            </span>
+                    <span className="text-orange-600 flex items-center gap-1 font-medium">
+                      <AlertCircle className="h-3 w-3" />
+                      Только авторы и админы могут делать публичные колоды.
+                    </span>
+                  ) : isPublic ? (
+                    "Колоду увидят все студенты."
                   ) : (
-                      isPublic
-                          ? "Колоду увидят все студенты."
-                          : "Колоду увидишь только ты."
+                    "Колоду увидишь только ты."
                   )}
                 </div>
               </div>
 
               <Switch
-                  id="public-mode"
-                  checked={isPublic}
-                  onCheckedChange={setIsPublic}
-                  disabled={!canMakePublic}
+                id="public-mode"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+                disabled={!canMakePublic}
               />
             </div>
           </CardContent>

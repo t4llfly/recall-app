@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {Spinner} from "@/components/ui/spinner";
-import {toast} from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -89,20 +89,14 @@ export default function LoginPage() {
             onClick={handleAuth}
             disabled={loading}
           >
-            {loading
-              ? <Spinner/>
-              : isSignUp
-                ? "Зарегистрироваться"
-                : "Войти"}
+            {loading ? <Spinner /> : isSignUp ? "Зарегистрироваться" : "Войти"}
           </Button>
 
           <p
             className="text-center text-sm text-slate-500 cursor-pointer hover:underline"
             onClick={() => setIsSignUp(!isSignUp)}
           >
-            {isSignUp
-              ? "Войти в аккаунт"
-              : "Зарегистрироваться"}
+            {isSignUp ? "Войти в аккаунт" : "Зарегистрироваться"}
           </p>
         </CardContent>
       </Card>

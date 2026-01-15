@@ -23,7 +23,6 @@ export function LikeButton({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleToggleLike = async (e: React.MouseEvent) => {
-    // ВАЖНО: Останавливаем всплытие события, чтобы не открылась ссылка на колоду
     e.preventDefault();
     e.stopPropagation();
 
@@ -34,7 +33,6 @@ export function LikeButton({
 
     if (isLoading) return;
 
-    // 1. Оптимистичное обновление (меняем интерфейс до ответа сервера)
     const previousIsLiked = isLiked;
     const previousCount = count;
 
@@ -44,26 +42,27 @@ export function LikeButton({
 
     try {
       if (previousIsLiked) {
-        // Убираем лайк
         const { error } = await supabase
           .from("deck_likes")
           .delete()
           .match({ user_id: currentUserId, deck_id: deckId });
 
-        if (error) throw error;
+        if (error) {
+          console.error(error);
+          setIsLiked(previousIsLiked);
+          setCount(previousCount);
+        }
       } else {
-        // Ставим лайк
         const { error } = await supabase
           .from("deck_likes")
           .insert({ user_id: currentUserId, deck_id: deckId });
 
-        if (error) throw error;
+        if (error) {
+            console.error(error);
+            setIsLiked(previousIsLiked);
+            setCount(previousCount);
+        }
       }
-    } catch (error) {
-      // Если ошибка — откатываем назад
-      console.error(error);
-      setIsLiked(previousIsLiked);
-      setCount(previousCount);
     } finally {
       setIsLoading(false);
     }

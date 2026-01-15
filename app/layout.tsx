@@ -4,7 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import {MaintenanceBanner} from "@/components/MaintenanceBanner";
+import { MaintenanceBanner } from "@/components/MaintenanceBanner";
 
 const MontserratFont = Montserrat({
   variable: "--font-montserrat",
@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     template: "%s | Recall",
-    default: "Recall"
+    default: "Recall",
   },
   description: "Альтернатива Quizlet для студентов AITU.",
   openGraph: {
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     ],
     locale: "ru_RU",
     type: "website",
-  }
+  },
 };
 
 export default function RootLayout({
@@ -56,7 +56,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <MaintenanceBanner/>
+          <MaintenanceBanner />
           <Navbar />
           {children}
           <Toaster />

@@ -39,7 +39,7 @@ export default function DeckPage() {
 
       const { data: deck } = await supabase
         .from("decks")
-        .select("title, deck_likes(count)")
+        .select("title, deck_likes(count), profiles(email)")
         .eq("id", deckId)
         .single();
 

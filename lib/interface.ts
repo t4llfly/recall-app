@@ -14,3 +14,8 @@ export interface CardInterface {
   front: string;
   back: string;
 }
+
+export interface MaintenanceInterface {
+  enabled: boolean;
+  message: string;
+}

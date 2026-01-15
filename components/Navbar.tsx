@@ -4,23 +4,25 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import {LogOut, User, Plus, ShieldAlert} from "lucide-react";
+import { LogOut, LogIn, Plus, ShieldAlert } from "lucide-react";
+import { User } from "@supabase/supabase-js";
+
 
 export function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<string>('student')
+  const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string>("student");
 
   const fetchRole = async (userId: string) => {
     const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single()
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
 
     if (data?.role) {
-      setRole(data.role)
+      setRole(data.role);
     }
-  }
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -29,31 +31,33 @@ export function Navbar() {
       } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        fetchRole(session.user.id);
+        await fetchRole(session.user.id);
       }
     };
 
-    getUser();
+    void getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
       if (session?.user) {
-        fetchRole(session.user.id)
+        await fetchRole(session.user.id);
       } else {
-        setRole('student')
+        setRole("student");
       }
-    })
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/'
+    window.location.href = "/";
   };
 
-  const canCreate = !!user
-  const canAccessAdminPanel = role === 'admin'
+  const canCreate = !!user;
+  const canAccessAdminPanel = role === "admin";
 
   return (
     <nav className="fixed pointer-events-none z-10 w-screen">
@@ -69,19 +73,25 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           {user && canAccessAdminPanel && (
-              <Link className="pointer-events-auto" href="/admin">
-                <Button variant="ghost" className="cursor-pointer rounded-full px-2 sm:px-4 text-red-600 hover:text-red-700 hover:bg-red-50">
-                  <ShieldAlert className="h-4 w-4" />
-                </Button>
-              </Link>
+            <Link className="pointer-events-auto" href="/admin">
+              <Button
+                variant="ghost"
+                className="cursor-pointer rounded-full px-2 sm:px-4 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <ShieldAlert className="h-4 w-4" />
+              </Button>
+            </Link>
           )}
           {user && canCreate && (
-              <Link className="pointer-events-auto" href="/create">
-                <Button variant="default" className="cursor-pointer rounded-full px-2 sm:px-4">
-                  <Plus className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Создать</span>
-                </Button>
-              </Link>
+            <Link className="pointer-events-auto" href="/create">
+              <Button
+                variant="default"
+                className="cursor-pointer rounded-full px-2 sm:px-4"
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Создать</span>
+              </Button>
+            </Link>
           )}
 
           {user ? (
@@ -103,7 +113,7 @@ export function Navbar() {
                 className="cursor-pointer pointer-events-auto h-full py-2 rounded-full"
                 variant="outline"
               >
-                <User className="h-4 w-4" /> Войти
+                <LogIn className="h-4 w-4" /> Войти
               </Button>
             </Link>
           )}
